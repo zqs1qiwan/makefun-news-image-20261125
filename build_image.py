@@ -272,6 +272,28 @@ def build():
     canvas.save(OUT, format="PNG", optimize=True)
 
 
+def verify():
+    """Check the built entry.png: exact dimensions and the 1 MiB cap.
+
+    Reopens the file the build just wrote (never trusts the in-memory
+    canvas alone) and fails loudly instead of shipping a wrong-sized
+    image: the grader refuses anything that is not 1024x1024 or is
+    over a megabyte, and a smaller file also helps the exact-tie break.
+    """
+    import hashlib
+    import os
+
+    data = open(OUT, "rb").read()
+    img = Image.open(OUT)
+    assert img.size == (W, H), f"entry.png is {img.size}, want {(W, H)}"
+    assert len(data) <= 1024 * 1024, (
+        f"entry.png is {len(data)} bytes, over the 1 MiB cap")
+    print(f"entry.png: {img.size[0]}x{img.size[1]}, {len(data)} bytes, "
+          f"sha256 {hashlib.sha256(data).hexdigest()[:16]}..., "
+          f"source {os.path.getsize(SRC)} bytes")
+
+
 if __name__ == "__main__":
     build()
+    verify()
     print("wrote", OUT)
